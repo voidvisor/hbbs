@@ -40,4 +40,20 @@ Ja jums ir kādi ieteikumi vai ziņojumi par kļūdām, nekautrējieties atvērt
 
 ---
 
+## Izveidot `standalone` versiju
 
+```shell
+rm -rf node_modules .next
+npm ci
+npm run build
+
+rm -rf deploy
+mkdir deploy
+cp -a .next/standalone/. deploy/
+
+mkdir -p deploy/.next
+cp .next/BUILD_ID deploy/.next/
+cp -a .next/static deploy/.next/
+cp -a public deploy/
+cp deploy/server.js deploy/app.js
+```

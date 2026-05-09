@@ -1,6 +1,6 @@
 'use server'
 
-import mariadb from "mariadb";
+import pool from "@/app/lib/db";
 import { cookies } from "next/headers";
 import { checkUser } from "@/app/lib/actions";
 import { redirect } from "next/navigation";
@@ -9,18 +9,6 @@ import { read, utils } from "xlsx";
 import QRCode from "qrcode";
 import { ImageRun, Paragraph, Table, TableCell, TableRow, TextRun, Document, Packer } from "docx";
 
-const pool = mariadb.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    idleTimeout: 60,
-});
-
-process.on("SIGINT", async function() {
-    await pool.end();
-    process.exit();
-})  
 
 interface Top {
     nominID: string;
@@ -441,7 +429,7 @@ export async function generateCodes(formData: FormData) {
         const code = randomUUID().split('-')[0]
         codes.push(code)
         qrCodes.push(await QRCode.toDataURL(
-            `https://www.avghagenabalva.lv/login?code=${code}`,
+            `https://www.hagenabalva.lv/login?code=${code}`,
             {
                 type: 'image/png',
                 errorCorrectionLevel: 'H',
@@ -465,7 +453,7 @@ export async function generateCodes(formData: FormData) {
                                 },
                             }),
                             new TextRun({
-                                text: 'https://www.avghagenabalva.lv',
+                                text: 'https://www.hagenabalva.lv',
                                 break: 1,
                                 size: 20,
                             }),

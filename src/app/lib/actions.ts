@@ -1,22 +1,10 @@
 'use server'
- 
+
 import { UUID, scryptSync, timingSafeEqual } from "crypto";
-import mariadb from "mariadb";
+import pool from "@/app/lib/db";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-const pool = mariadb.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  idleTimeout: 60,
-});
-
-process.on("SIGINT", async function() {
-  await pool.end();
-  process.exit();
-})
 
 export type timestamp = {
   period: string,
@@ -138,9 +126,10 @@ export async function getGrupas(source: string) {
   try {
     connection = await pool.getConnection();
     const result = (await connection.query(`
-      SELECT grupa, GROUP_CONCAT(vards SEPARATOR ',') AS cilveki
+      SELECT grupa, GROUP_CONCAT(vards ORDER BY vards SEPARATOR ',') AS cilveki
       FROM ${source}
       GROUP BY grupa
+      ORDER BY grupa
     `)) as { grupa: string, cilveki: string }[]
 
     grupas = result.map(({ grupa, cilveki }) => ({ grupa, cilveki: cilveki.split(',') }))
@@ -161,6 +150,7 @@ export async function getNominacijas() {
     const result = (await connection.query(`
       SELECT *
       FROM nominacijas
+      ORDER BY virsraksts
     `)) as { tips: 'skolenu'|'skolotaju', id: UUID, virsraksts: string, apraksts: string }[]
     nominacijas = result
   } catch (error) {
@@ -177,7 +167,7 @@ export async function getFinalists() {
   try {
     connection = await pool.getConnection();
     const result = (await connection.query(`
-      SELECT nominID, GROUP_CONCAT(vards SEPARATOR ';') as cilveki
+      SELECT nominID, GROUP_CONCAT(vards ORDER BY vards SEPARATOR ';') as cilveki
       FROM finalists
       GROUP BY nominID
     `)) as { nominID: UUID, cilveki: string }[]
